@@ -1,9 +1,9 @@
 from datetime import datetime
 from flask import Blueprint, request, jsonify, g, current_app
 from sqlalchemy.orm import joinedload
-from app import db
-from models import Grade, Submission, Assignment, SubmissionStatus, User
-from .auth import authenticate, authorize
+from backend.app import db
+from backend.models import Grade, Submission, Assignment, SubmissionStatus, User
+from backend.routes.auth import authenticate, authorize
 
 grades_bp = Blueprint('grades', __name__)
 

@@ -2,9 +2,10 @@ import jwt
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Blueprint, request, jsonify, g
-from app import db, bcrypt
-from models import User, Role
+from backend.app import db, bcrypt
+from backend.models import User, Role
 import os
+import re
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -69,9 +70,28 @@ def register():
     full_name = data.get('fullName')
     role = data.get('role')
 
+    # 필드 입력 확인
     if not all([email, password, full_name, role]):
-        return jsonify(error='모든 필수 필드를 입력해주세요.'), 400
+        return jsonify(error='모든 필드를 입력해주세요.'), 400
 
+    # 이름 유효성 검사 (한글, 영문 대소문자만 허용)
+    if not re.match(r'^[가-힣a-zA-Z]+$', full_name):
+        return jsonify(error='이름은 한글 또는 영문으로만 구성되어야 합니다.'), 400
+
+    # 비밀번호 유효성 검사 (8~20자, 영문 대문자, 소문자, 숫자 각 1개 이상 필수)
+    if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,20}$', password):
+        return jsonify(error='비밀번호는 8~20자 길이의 영문 대소문자, 숫자를 모두 포함해야 합니다.'), 400
+
+    # 이메일 도메인 검사
+    if not email.endswith('@office.kopo.ac.kr'):
+        return jsonify(error='이메일은 @office.kopo.ac.kr 도메인만 사용할 수 있습니다.'), 400
+
+    # 이메일 ID(@ 앞부분) 형식 검사
+    local_part = email.split('@')[0]
+    if not re.match(r'^[A-Za-z0-9]([-_.]?[A-Za-z0-9])*$', local_part):
+        return jsonify(error='이메일 주소의 ID 형식이 올바르지 않습니다.'), 400
+
+    # 이메일 중복 확인
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return jsonify(error='이미 사용 중인 이메일입니다.'), 409
@@ -90,16 +110,8 @@ def register():
     access_token, refresh_token = generate_tokens(new_user.id, new_user.role, new_user.email)
 
     return jsonify({
-        'message': '회원가입이 완료되었습니다.',
-        'token': access_token,
-        'refreshToken': refresh_token,
-        'user': {
-            'id': new_user.id,
-            'email': new_user.email,
-            'fullName': new_user.name,
-            'role': new_user.role.value,
-        }
-    }), 201
+            'message': '회원가입 요청이 완료되었습니다. 관리자의 승인을 기다려주세요.',
+        }), 201
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -108,8 +120,13 @@ def login():
     password = data.get('password')
 
     user = User.query.filter_by(email=email).first()
+
+    # 사용자 상태 확인 로직 추가
     if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify(error='이메일 또는 비밀번호가 올바르지 않습니다.'), 401
+
+    if user.status != 'APPROVED':
+        return jsonify(error='아직 승인되지 않은 계정이거나 거부된 계정입니다.'), 403
 
     access_token, refresh_token = generate_tokens(user.id, user.role, user.email)
 
@@ -144,7 +161,7 @@ def get_current_user():
     }), 200
 
 @auth_bp.route('/update-profile', methods=['PUT'])
-@authorize(allowed_roles=[role.value for role in Role])
+@authorize(allowed_roles=["STUDENT", "TEACHER", "ADMIN"])
 def update_profile():
     data = request.json
     full_name = data.get('fullName')
@@ -224,7 +241,7 @@ def logout():
 @auth_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
     # TODO: Implement email sending for password reset
-    return jsonify(message='이메일이 등록되어 있다면 비밀번호 재설정 링크가 발송됩니다.'), 200
+    return jsonify(message='이메일로 비밀번호 재설정 링크가 발송됩니다.'), 200
 
 @auth_bp.route('/reset-password', methods=['POST'])
 def reset_password():

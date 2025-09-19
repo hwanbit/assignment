@@ -12,6 +12,7 @@ import { GradingForm } from './components/grading/GradingForm';
 import { GradesList } from './components/grades/GradesList';
 import { Assignment, Submission, Grade } from './types';
 import { Card } from './components/ui/Card';
+import { UserApproval } from './components/admin/UserApproval';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -93,6 +94,9 @@ const Dashboard: React.FC = () => {
       case 'grading':
       case 'grades':
         return <GradesList />;
+
+      case 'userManagement':
+        return user?.role === 'ADMIN' ? <UserApproval /> : null;
 
       default:
         return (

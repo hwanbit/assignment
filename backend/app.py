@@ -35,12 +35,14 @@ def create_app():
     from .routes.submissions import submissions_bp
     from .routes.grades import grades_bp
     from .routes.files import files_bp
+    from .routes.admin import admin_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(assignments_bp, url_prefix='/api/assignments')
     app.register_blueprint(submissions_bp, url_prefix='/api/submissions')
     app.register_blueprint(grades_bp, url_prefix='/api/grades')
     app.register_blueprint(files_bp, url_prefix='/api/files')
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
 
     # Handle global errors
     @app.errorhandler(404)

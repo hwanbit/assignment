@@ -32,8 +32,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   return (
     <Card className="w-full max-w-md">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Sign In</h2>
-        <p className="text-gray-600 mt-2">Access your assignments and submissions</p>
+        <h2 className="text-3xl font-bold text-gray-900">로그인</h2>
+        <p className="text-gray-600 mt-2">과제를 연달아 내시는 교수님의 심리는 무엇일까?</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -44,22 +44,34 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         )}
 
         <Input
-          label="Email"
+          label="아이디"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="professor@university.edu"
+          placeholder="학교 이메일 주소를 입력하세요."
           required
         />
 
         <Input
-          label="Password"
+          label="비밀번호"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter your password"
+          placeholder="비밀번호를 입력하세요."
           required
         />
+
+        <div className="flex items-center justify-end">
+          <div className="text-sm">
+            <button
+                type="button"
+                onClick={() => alert('Password reset feature is not yet implemented.')}
+                className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
+            >
+              비밀번호를 잊어버리셨나요?
+            </button>
+          </div>
+        </div>
 
         <Button
           type="submit"
@@ -67,18 +79,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           isLoading={isLoading}
           disabled={!email || !password}
         >
-          {isLoading ? 'Signing In...' : 'Sign In'}
+          {isLoading ? '로그인 중...' : '로그인'}
         </Button>
       </form>
 
       <div className="mt-6 text-center">
         <p className="text-gray-600">
-          Don't have an account?{' '}
+          계정이 없으신가요?{' '}
           <button
             onClick={onSwitchToRegister}
             className="text-blue-600 hover:text-blue-500 font-medium"
           >
-            Create one here
+            회원가입
           </button>
         </p>
       </div>

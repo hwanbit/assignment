@@ -1,7 +1,13 @@
 import uuid
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from app import db # app.py에서 정의한 db 인스턴스를 가져옵니다
+from backend.app import db
+
+# UserStatus Enum 추가
+class UserStatus(db.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
 
 # MySQL ENUM 타입 정의
 class Role(db.Enum):
@@ -25,6 +31,7 @@ class User(db.Model):
     password = db.Column(db.String(191), nullable=False)
     name = db.Column(db.String(191), nullable=False)
     role = db.Column(Role, default=Role.STUDENT, nullable=False)
+    status = db.Column(UserStatus, default=UserStatus.PENDING, nullable=False)
     createdAt = db.Column(db.DateTime(3), default=datetime.utcnow, nullable=False)
     updatedAt = db.Column(db.DateTime(3), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 

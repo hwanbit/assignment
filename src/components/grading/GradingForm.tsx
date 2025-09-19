@@ -1,60 +1,58 @@
-import React, { useEffect, useState } from 'react';
-import { submissionApi, fileApi } from '../../lib/api';
-import { useAuth } from '../../contexts/AuthContext';
-import { Submission, Assignment } from '../../types';
+// src/components/grading/GradingForm.tsx
+
+import React, { useState } from 'react';
+import { gradeApi, fileApi } from '../../lib/api';
+import { Submission, Grade } from '../../types';
 import { Card } from '../ui/Card';
-import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Badge } from '../ui/Badge';
 import { formatDate } from '../../utils/date';
 import { formatFileSize } from '../../utils/fileValidation';
-import { FileText, Download, Calendar, User, CheckCircle } from 'lucide-react';
+import { FileText, Download, User, Calendar } from 'lucide-react';
 
-interface SubmissionsListProps {
-    assignment?: Assignment;
-    onGradeSubmission?: (submission: Submission) => void;
+interface GradingFormProps {
+    submission: Submission;
+    onGradingComplete: (grade: Grade) => void;
+    onCancel: () => void;
 }
 
-export const SubmissionsList: React.FC<SubmissionsListProps> = ({
-                                                                    assignment,
-                                                                    onGradeSubmission,
-                                                                }) => {
-    const { user } = useAuth();
-    const [submissions, setSubmissions] = useState<Submission[]>([]);
-    const [loading, setLoading] = useState(true);
+export const GradingForm: React.FC<GradingFormProps> = ({
+                                                            submission,
+                                                            onGradingComplete,
+                                                            onCancel,
+                                                        }) => {
+    const [score, setScore] = useState<number | ''>(submission.grade?.points || '');
+    const [feedback, setFeedback] = useState(submission.grade?.feedback || '');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    useEffect(() => {
-        fetchSubmissions();
-    }, [user, assignment]);
+    const maxPoints = submission.assignment?.max_points || 100;
 
-    const fetchSubmissions = async () => {
-        if (!user) return;
-        setLoading(true);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (score === '' || score < 0 || score > maxPoints) {
+            setError(`Score must be between 0 and ${maxPoints}.`);
+            return;
+        }
+        setIsLoading(true);
+        setError('');
 
         try {
-            let response;
-            if (user.role === 'student') {
-                // 학생은 자신의 제출물 목록을 가져옵니다.
-                response = await submissionApi.getMySubmissions();
-            } else {
-                // 교수는 특정 과제의 제출물 목록 또는 모든 제출물 목록을 가져옵니다.
-                if (assignment) {
-                    response = await submissionApi.getSubmissionsForAssignment(assignment.id);
-                } else {
-                    response = await submissionApi.getAllSubmissions();
-                }
-            }
-            setSubmissions(response.data || []);
-        } catch (error) {
-            console.error('Error fetching submissions:', error);
-            setSubmissions([]); // 에러 발생 시 목록을 비웁니다.
+            const response = await gradeApi.gradeSubmission(submission.id, {
+                score: Number(score),
+                feedback,
+            });
+            onGradingComplete(response.data);
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Failed to submit grade.');
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
     const handleDownloadFile = async (filePath: string, filename: string) => {
         try {
-            // fileApi를 사용하여 파일 다운로드 URL을 생성하고 다운로드를 트리거합니다.
             const url = await fileApi.download('submission-files', filePath);
             if (url) {
                 const a = document.createElement('a');
@@ -63,7 +61,7 @@ export const SubmissionsList: React.FC<SubmissionsListProps> = ({
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                URL.revokeObjectURL(url); // 메모리 누수 방지를 위해 URL 해제
+                URL.revokeObjectURL(url);
             }
         } catch (error) {
             console.error('Error downloading file:', error);
@@ -71,144 +69,109 @@ export const SubmissionsList: React.FC<SubmissionsListProps> = ({
         }
     };
 
-    if (loading) {
-        return (
-            <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                    <Card key={i} className="animate-pulse">
-                        <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    </Card>
-                ))}
-            </div>
-        );
-    }
-
-    if (submissions.length === 0) {
-        return (
-            <Card className="text-center py-12">
-                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h4 className="text-lg font-medium text-gray-900 mb-2">No submissions found</h4>
-                <p className="text-gray-500">
-                    {user?.role === 'professor'
-                        ? 'Students haven\'t submitted any assignments yet.'
-                        : 'You haven\'t submitted any assignments yet.'
-                    }
-                </p>
-            </Card>
-        );
-    }
-
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-900">
-                    {user?.role === 'professor' ? 'Student Submissions' : 'My Submissions'}
-                </h3>
-                <p className="text-sm text-gray-500">
-                    {submissions.length} submission{submissions.length !== 1 ? 's' : ''}
+        <Card>
+            <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Grade Submission</h3>
+                <p className="text-gray-600 mt-1">
+                    Assignment: {submission.assignment?.title}
                 </p>
             </div>
 
-            <div className="space-y-4">
-                {submissions.map(submission => (
-                    <Card key={submission.id}>
-                        <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                                <div className="flex items-center space-x-3 mb-2">
-                                    <h4 className="text-lg font-semibold text-gray-900">
-                                        {submission.assignment?.title}
-                                    </h4>
-                                    <Badge variant={submission.grade ? 'success' : 'warning'}>
-                                        {submission.grade ? 'Graded' : 'Pending'}
-                                    </Badge>
-                                </div>
+            {/* Submission Details */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+                <div className="flex items-center space-x-6 text-sm text-gray-600 mb-4">
+                    {submission.student && (
+                        <div className="flex items-center space-x-2">
+                            <User className="w-4 h-4" />
+                            <span>{submission.student.full_name} ({submission.student.email})</span>
+                        </div>
+                    )}
+                    <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>Submitted: {formatDate(submission.submitted_at)}</span>
+                    </div>
+                </div>
 
-                                <div className="flex items-center space-x-6 text-sm text-gray-500 mb-4">
-                                    {user?.role === 'professor' && submission.student && (
-                                        <div className="flex items-center space-x-1">
-                                            <User className="w-4 h-4" />
-                                            <span>{submission.student.full_name}</span>
-                                        </div>
-                                    )}
+                {submission.content && (
+                    <div className="mb-4">
+                        <p className="text-sm font-medium text-gray-800 mb-1">Text Submission:</p>
+                        <div className="bg-white p-3 rounded-md border">
+                            <p className="text-gray-700 whitespace-pre-wrap">{submission.content}</p>
+                        </div>
+                    </div>
+                )}
 
-                                    <div className="flex items-center space-x-1">
-                                        <Calendar className="w-4 h-4" />
-                                        <span>Submitted: {formatDate(submission.submitted_at)}</span>
+                {submission.files && submission.files.length > 0 && (
+                    <div>
+                        <p className="text-sm font-medium text-gray-800 mb-2">Attached Files:</p>
+                        <div className="space-y-2">
+                            {submission.files.map(file => (
+                                <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded-md border">
+                                    <div className="flex items-center space-x-2">
+                                        <FileText className="w-4 h-4 text-gray-500" />
+                                        <span className="text-sm text-gray-700">{file.filename}</span>
+                                        <span className="text-xs text-gray-500">({formatFileSize(file.file_size)})</span>
                                     </div>
-
-                                    {submission.grade && (
-                                        <div className="flex items-center space-x-1">
-                                            <CheckCircle className="w-4 h-4 text-green-500" />
-                                            <span className="font-medium text-green-700">
-                        {submission.grade.points}/{submission.assignment?.max_points}
-                      </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {submission.content && (
-                                    <div className="mb-4">
-                                        <p className="text-sm font-medium text-gray-700 mb-1">Text Submission:</p>
-                                        <div className="bg-gray-50 p-3 rounded-md">
-                                            <p className="text-gray-700 whitespace-pre-wrap line-clamp-3">
-                                                {submission.content}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {submission.files && submission.files.length > 0 && (
-                                    <div className="mb-4">
-                                        <p className="text-sm font-medium text-gray-700 mb-2">Attached Files:</p>
-                                        <div className="space-y-1">
-                                            {submission.files.map(file => (
-                                                <div key={file.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-                                                    <div className="flex items-center space-x-2">
-                                                        <FileText className="w-4 h-4 text-gray-500" />
-                                                        <span className="text-sm text-gray-700">{file.filename}</span>
-                                                        <span className="text-xs text-gray-500">
-                              ({formatFileSize(file.file_size)})
-                            </span>
-                                                    </div>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleDownloadFile(file.file_path, file.filename)}
-                                                    >
-                                                        <Download className="w-3 h-3 mr-1" />
-                                                        Download
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {submission.grade && submission.grade.feedback && (
-                                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                                        <p className="text-sm font-medium text-blue-900 mb-1">Professor Feedback:</p>
-                                        <p className="text-blue-800 text-sm">{submission.grade.feedback}</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {user?.role === 'professor' && onGradeSubmission && (
-                                <div className="ml-4">
                                     <Button
-                                        variant={submission.grade ? 'outline' : 'primary'}
+                                        variant="outline"
                                         size="sm"
-                                        onClick={() => onGradeSubmission(submission)}
+                                        onClick={() => handleDownloadFile(file.file_path, file.filename)}
                                     >
-                                        {submission.grade ? 'Update Grade' : 'Grade'}
+                                        <Download className="w-3 h-3 mr-1" />
+                                        Download
                                     </Button>
                                 </div>
-                            )}
+                            ))}
                         </div>
-                    </Card>
-                ))}
+                    </div>
+                )}
             </div>
-        </div>
+
+            {/* Grading Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+                        {error}
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className='md:col-span-1'>
+                        <Input
+                            label={`Score (out of ${maxPoints})`}
+                            type="number"
+                            value={score}
+                            onChange={(e) => setScore(e.target.value === '' ? '' : Number(e.target.value))}
+                            max={maxPoints}
+                            min="0"
+                            required
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Feedback (Optional)
+                    </label>
+                    <textarea
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        placeholder="Provide constructive feedback for the student..."
+                        rows={5}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                    />
+                </div>
+
+                <div className="flex justify-end space-x-4 pt-6 border-t">
+                    <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" isLoading={isLoading}>
+                        {submission.grade ? 'Update Grade' : 'Submit Grade'}
+                    </Button>
+                </div>
+            </form>
+        </Card>
     );
 };

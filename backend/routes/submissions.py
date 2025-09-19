@@ -4,9 +4,9 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify, g, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm import joinedload
-from app import db
-from models import Assignment, Submission, SubmissionStatus, SubmissionFile, User
-from .auth import authenticate, authorize
+from backend.app import db
+from backend.models import Assignment, Submission, SubmissionStatus, SubmissionFile, User
+from backend.routes.auth import authenticate, authorize
 
 submissions_bp = Blueprint('submissions', __name__)
 

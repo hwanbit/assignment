@@ -74,3 +74,9 @@ export const fileApi = {
     }
   },
 };
+
+export const adminApi = {
+  getPendingUsers: () => api.get<any[]>('/admin/pending-users'),
+  approveUser: (userId: string) => api.post(`/admin/users/${userId}/approve`),
+  rejectUser: (userId: string) => api.post(`/admin/users/${userId}/reject`),
+};

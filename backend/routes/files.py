@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 import os
-from .auth import authenticate, authorize
-from models import SubmissionFile
+from backend.routes.auth import authenticate, authorize
+from backend.models import SubmissionFile
 
 files_bp = Blueprint('files', __name__)
 

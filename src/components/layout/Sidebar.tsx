@@ -30,13 +30,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     { id: 'grading', label: 'Grading', icon: BarChart3 },
   ];
 
-  const tabs = user?.role === 'professor' ? professorTabs : studentTabs;
+  const adminTabs = [
+    ...professorTabs,
+    { id: 'userManagement', label: 'User Management', icon: Users },
+  ]
+
+  const tabs = user?.role === 'ADMIN' ? adminTabs : (user?.role === 'TEACHER' ? professorTabs : studentTabs);
 
   return (
     <aside className="w-64 bg-white shadow-sm border-r border-gray-200 h-full">
       <div className="p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          {user?.role === 'professor' ? 'Professor Dashboard' : 'Student Dashboard'}
+          {user?.role === 'STUDENT' ? 'Student Dashboard' : 'Professor/Admin Dashboard'}
         </h2>
         
         <nav className="space-y-2">
