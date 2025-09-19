@@ -1,7 +1,8 @@
 // src/lib/api.ts
 import axios from 'axios';
+import { Assignment, Submission, Grade, User, AssignmentFile, QALog } from '../types';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -17,29 +18,38 @@ api.interceptors.request.use((config) => {
 });
 
 export const authApi = {
-  login: (email: string, password: string) =>
-      api.post('/auth/login', { email, password }),
-  register: (data: any) =>
-      api.post('/auth/register', data),
+  login: (data: any) => api.post('/auth/login', data),
+  register: (data: any) => api.post('/auth/register', data),
+  getCurrentUser: () => api.get<{ user: User }>('/auth/me'),
 };
 
 export const assignmentApi = {
-  getAll: () => api.get('/assignments'),
-  getById: (id: string) => api.get(`/assignments/${id}`),
-  create: (data: any) => api.post('/assignments', data),
-  update: (id: string, data: any) => api.put(`/assignments/${id}`, data),
+  getAll: () => api.get<Assignment[]>('/assignments'),
+  getById: (id: string) => api.get<Assignment>(`/assignments/${id}`),
+  create: (data: FormData) => api.post<Assignment>('/assignments', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  update: (id: string, data: Partial<Assignment>) => api.put<Assignment>(`/assignments/${id}`, data),
   delete: (id: string) => api.delete(`/assignments/${id}`),
-  // 과제 파일 목록을 가져오는 엔드포인트 추가
-  getFiles: (assignmentId: number) => api.get(`/assignments/${assignmentId}/files`),
+  getFiles: (assignmentId: string) => api.get<AssignmentFile[]>(`/assignments/${id}/files`),
 };
 
 // 제출 관련 API
 export const submissionApi = {
-  // 학생의 특정 과제 제출물 가져오는 엔드포인트 추가
-  getStudentSubmission: (assignmentId: number, studentId: string) =>
-      api.get(`/submissions/assignments/${assignmentId}/student/${studentId}`),
-  create: (data: any) => api.post('/submissions', data),
-  // 제출 파일 업로드 로직은 별도로 구현해야 함
+  // 학생의 모든 제출물 가져오기
+  getMySubmissions: () => api.get<Submission[]>('/submissions/my-submissions'),
+  // 특정 과제에 대한 학생 제출물 가져오기
+  getStudentSubmissionForAssignment: (assignmentId: string) => api.get<Submission>(`/assignments/${assignmentId}/my-submission`), // 예시 엔드포인트
+  create: (assignmentId: string, data: FormData) => api.post<Submission>(`/assignments/${assignmentId}/submit-with-files`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+};
+
+export const gradeApi = {
+  // 학생의 모든 성적 가져오기
+  getMyGrades: () => api.get<Submission[]>('/grades/my-grades'), // 제출물에 성적이 포함되어 반환
+  // 특정 제출물 채점하기
+  gradeSubmission: (submissionId: string, data: { score: number, feedback: string }) => api.post<Grade>(`/submissions/${submissionId}/grade`, data),
 };
 
 // Q&A 관련 API

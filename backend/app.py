@@ -18,7 +18,7 @@ def create_app():
 
     # Configuration
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or "a-secret-key"
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL") or "mysql+mysqlconnector://root:password@localhost/assignments"
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL") or "mysql+mysqlconnector://sun:1234@localhost/assignment_db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Initialize extensions
