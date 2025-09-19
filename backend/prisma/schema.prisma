@@ -1,0 +1,99 @@
+// backend/prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  password     String
+  name         String
+  role         Role         @default(STUDENT)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  assignments  Assignment[]
+  submissions  Submission[]
+  grades       Grade[]
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+model Assignment {
+  id           String       @id @default(uuid())
+  title        String
+  description  String       @db.Text
+  dueDate      DateTime
+  maxScore     Int
+  teacherId    String
+  teacher      User         @relation(fields: [teacherId], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  submissions  Submission[]
+  attachments  Attachment[]
+}
+
+model Submission {
+  id           String       @id @default(uuid())
+  assignmentId String
+  assignment   Assignment   @relation(fields: [assignmentId], references: [id])
+  studentId    String
+  student      User         @relation(fields: [studentId], references: [id])
+  content      String       @db.Text
+  submittedAt  DateTime     @default(now())
+  status       SubmissionStatus @default(PENDING)
+
+  files        SubmissionFile[]
+  grade        Grade?
+
+  @@unique([assignmentId, studentId])
+}
+
+enum SubmissionStatus {
+  PENDING
+  GRADED
+  RETURNED
+}
+
+model Grade {
+  id           String       @id @default(uuid())
+  submissionId String       @unique
+  submission   Submission   @relation(fields: [submissionId], references: [id])
+  score        Int
+  feedback     String?      @db.Text
+  gradedBy     String
+  teacher      User         @relation(fields: [gradedBy], references: [id])
+  gradedAt     DateTime     @default(now())
+}
+
+model Attachment {
+  id           String       @id @default(uuid())
+  assignmentId String
+  assignment   Assignment   @relation(fields: [assignmentId], references: [id])
+  fileName     String
+  fileUrl      String
+  fileSize     Int
+  mimeType     String
+  uploadedAt   DateTime     @default(now())
+}
+
+model SubmissionFile {
+  id           String       @id @default(uuid())
+  submissionId String
+  submission   Submission   @relation(fields: [submissionId], references: [id])
+  fileName     String
+  fileUrl      String
+  fileSize     Int
+  mimeType     String
+  uploadedAt   DateTime     @default(now())
+}
