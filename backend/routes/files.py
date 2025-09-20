@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 import os
 from backend.routes.auth import authenticate, authorize
-from backend.models import SubmissionFile
 
 files_bp = Blueprint('files', __name__)
 
 @files_bp.route('/download', methods=['GET'])
 @authenticate
 def download_file():
+    from backend.models import SubmissionFile
     file_path = request.args.get('filePath')
     file_type = request.args.get('type')
     filename_original = request.args.get('filename')

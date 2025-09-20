@@ -2,8 +2,8 @@ import jwt
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Blueprint, request, jsonify, g
-from backend.app import db, bcrypt
-from backend.models import User, Role
+from backend.extensions import db, bcrypt
+from backend.models import User, UserStatus, Role
 import os
 import re
 
@@ -125,7 +125,7 @@ def login():
     if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify(error='이메일 또는 비밀번호가 올바르지 않습니다.'), 401
 
-    if user.status != 'APPROVED':
+    if user.status != UserStatus.APPROVED:
         return jsonify(error='아직 승인되지 않은 계정이거나 거부된 계정입니다.'), 403
 
     access_token, refresh_token = generate_tokens(user.id, user.role, user.email)

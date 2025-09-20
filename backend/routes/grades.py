@@ -1,7 +1,8 @@
 from datetime import datetime
 from flask import Blueprint, request, jsonify, g, current_app
 from sqlalchemy.orm import joinedload
-from backend.app import db
+# backend.app 대신 backend.extensions에서 db를 가져옵니다.
+from backend.extensions import db
 from backend.models import Grade, Submission, Assignment, SubmissionStatus, User
 from backend.routes.auth import authenticate, authorize
 

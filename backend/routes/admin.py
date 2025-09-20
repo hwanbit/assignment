@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, g
-from backend.app import db
+# backend.app 대신 backend.extensions에서 db를 가져옵니다.
+from backend.extensions import db
 from backend.models import User, UserStatus
 from backend.routes.auth import authorize
 
