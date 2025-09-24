@@ -51,7 +51,7 @@ interface AuthResponse {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, role: 'professor' | 'student') => Promise<void>;
+  signUp: (email: string, password: string, fullName: string, role: 'admin' | 'professor' | 'student') => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;

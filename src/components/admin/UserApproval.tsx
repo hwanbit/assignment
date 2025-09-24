@@ -53,32 +53,32 @@ export const UserApproval: React.FC = () => {
         }
     };
 
-    if (loading) return <p>Loading users...</p>;
+    if (loading) return <p>사용자 로드 중...</p>;
     if (error) return <p className="text-red-500">{error}</p>;
 
     return (
         <Card>
             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
                 <Users className="w-6 h-6 mr-2" />
-                User Approval Requests
+                사용자 승인 요청
             </h3>
             {pendingUsers.length === 0 ? (
-                <p className="text-gray-500">No pending user registrations.</p>
+                <p className="text-gray-500">회원가입을 요청한 계정이 없습니다.</p>
             ) : (
                 <div className="space-y-4">
                     {pendingUsers.map(user => (
                         <div key={user.id} className="p-4 border rounded-lg flex justify-between items-center">
                             <div>
-                                <p className="font-semibold">{user.fullName} <Badge>{user.role}</Badge></p>
+                                <p className="font-semibold">{user.full_name} <Badge>{user.role}</Badge></p>
                                 <p className="text-sm text-gray-600">{user.email}</p>
                                 <p className="text-xs text-gray-400">Requested on: {formatDate(user.createdAt)}</p>
                             </div>
                             <div className="flex space-x-2">
                                 <Button size="sm" onClick={() => handleApprove(user.id)}>
-                                    <Check className="w-4 h-4 mr-1" /> Approve
+                                    <Check className="w-4 h-4 mr-1" /> 승인
                                 </Button>
                                 <Button size="sm" variant="danger" onClick={() => handleReject(user.id)}>
-                                    <X className="w-4 h-4 mr-1" /> Reject
+                                    <X className="w-4 h-4 mr-1" /> 거부
                                 </Button>
                             </div>
                         </div>

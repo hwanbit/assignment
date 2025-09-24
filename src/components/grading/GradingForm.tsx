@@ -72,7 +72,7 @@ export const GradingForm: React.FC<GradingFormProps> = ({
     return (
         <Card>
             <div className="mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Grade Submission</h3>
+                <h3 className="text-xl font-bold text-gray-900">성적 제출</h3>
                 <p className="text-gray-600 mt-1">
                     Assignment: {submission.assignment?.title}
                 </p>
@@ -95,7 +95,7 @@ export const GradingForm: React.FC<GradingFormProps> = ({
 
                 {submission.content && (
                     <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-800 mb-1">Text Submission:</p>
+                        <p className="text-sm font-medium text-gray-800 mb-1">텍스트 제출:</p>
                         <div className="bg-white p-3 rounded-md border">
                             <p className="text-gray-700 whitespace-pre-wrap">{submission.content}</p>
                         </div>
@@ -104,7 +104,7 @@ export const GradingForm: React.FC<GradingFormProps> = ({
 
                 {submission.files && submission.files.length > 0 && (
                     <div>
-                        <p className="text-sm font-medium text-gray-800 mb-2">Attached Files:</p>
+                        <p className="text-sm font-medium text-gray-800 mb-2">첨부된 파일:</p>
                         <div className="space-y-2">
                             {submission.files.map(file => (
                                 <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded-md border">
@@ -119,7 +119,7 @@ export const GradingForm: React.FC<GradingFormProps> = ({
                                         onClick={() => handleDownloadFile(file.file_path, file.filename)}
                                     >
                                         <Download className="w-3 h-3 mr-1" />
-                                        Download
+                                        다운로드
                                     </Button>
                                 </div>
                             ))}
@@ -152,12 +152,12 @@ export const GradingForm: React.FC<GradingFormProps> = ({
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Feedback (Optional)
+                        피드백 (선택 사항)
                     </label>
                     <textarea
                         value={feedback}
                         onChange={(e) => setFeedback(e.target.value)}
-                        placeholder="Provide constructive feedback for the student..."
+                        placeholder="학생에게 피드백을 제공하세요..."
                         rows={5}
                         className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm"
                     />
@@ -165,10 +165,10 @@ export const GradingForm: React.FC<GradingFormProps> = ({
 
                 <div className="flex justify-end space-x-4 pt-6 border-t">
                     <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-                        Cancel
+                        취소
                     </Button>
                     <Button type="submit" isLoading={isLoading}>
-                        {submission.grade ? 'Update Grade' : 'Submit Grade'}
+                        {submission.grade ? '성적 업데이트' : '성적 제출'}
                     </Button>
                 </div>
             </form>

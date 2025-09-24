@@ -1,8 +1,10 @@
 from flask import Blueprint, jsonify, g
-# backend.app 대신 backend.extensions에서 db를 가져옵니다.
 from backend.extensions import db
 from backend.models import User, UserStatus
 from backend.routes.auth import authorize
+
+# admin ID: admin@office.kopo.ac.kr
+# admin PW: Polytech24
 
 admin_bp = Blueprint('admin', __name__)
 

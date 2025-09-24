@@ -23,7 +23,7 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
     const [assignments, setAssignments] = useState<Assignment[]>([]);
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | 'ongoing' | 'overdue' | 'completed'>('all');
+    const [filter, setFilter] = useState<'모두' | '진행중' | '기한 경과' | '완료됨'>('모두');
 
     useEffect(() => {
         fetchAssignments();
@@ -64,11 +64,11 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
         const overdue = isOverdue(assignment.due_date);
 
         switch (filter) {
-            case 'ongoing':
+            case '진행중':
                 return !overdue && !isCompleted;
-            case 'overdue':
+            case '기한 경과':
                 return overdue && !isCompleted;
-            case 'completed':
+            case '완료됨':
                 return isCompleted;
             default:
                 return true;
@@ -77,16 +77,16 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
 
     const getStatusBadge = (assignment: Assignment) => {
         if (completedAssignmentIds.has(assignment.id)) {
-            return <Badge variant="success">Completed</Badge>;
+            return <Badge variant="success">완료됨</Badge>;
         }
         if (isOverdue(assignment.due_date)) {
-            return <Badge variant="danger">Overdue</Badge>;
+            return <Badge variant="danger">기한 경과</Badge>;
         }
         const daysUntilDue = getDaysUntilDue(assignment.due_date);
         if (daysUntilDue <= 3) {
-            return <Badge variant="warning">Due Soon</Badge>;
+            return <Badge variant="warning">곧 마감됨</Badge>;
         }
-        return <Badge variant="info">Ongoing</Badge>;
+        return <Badge variant="info">진행중</Badge>;
     };
 
     if (loading) {
@@ -107,11 +107,11 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-900">
-                    {user?.role === 'professor' ? 'All Assignments' : 'My Assignments'}
+                    {user?.role === 'PROFESSOR' ? '모든 과제' : '내 과제'}
                 </h3>
 
                 <div className="flex space-x-2">
-                    {['all', 'ongoing', 'overdue', 'completed'].map(filterOption => (
+                    {['모두', '진행중', '기한 경과', '완료됨'].map(filterOption => (
                         <Button
                             key={filterOption}
                             variant={filter === filterOption ? 'primary' : 'outline'}
@@ -127,11 +127,11 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
             {filteredAssignments.length === 0 ? (
                 <Card className="text-center py-12">
                     <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h4 className="text-lg font-medium text-gray-900 mb-2">No assignments found</h4>
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">과제가 없습니다.</h4>
                     <p className="text-gray-500">
-                        {filter === 'all'
-                            ? 'No assignments have been created yet.'
-                            : `No ${filter} assignments found.`
+                        {filter === '모두'
+                            ? '아직 과제가 할당되지 않았습니다.'
+                            : `${filter} 과제를 찾을 수 없습니다.`
                         }
                     </p>
                 </Card>
@@ -176,7 +176,7 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
                                     </div>
                                 </div>
 
-                                {user?.role === 'professor' && user.id === assignment.professor_id && (
+                                {user?.role === 'PROFESSOR' && user.id === assignment.professor_id && (
                                     <div className="flex space-x-2 ml-4">
                                         <Button
                                             variant="outline"

@@ -18,31 +18,35 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
   const { user } = useAuth();
 
   const studentTabs = [
-    { id: 'assignments', label: 'My Assignments', icon: BookOpen },
-    { id: 'submissions', label: 'My Submissions', icon: FileText },
-    { id: 'grades', label: 'Grades', icon: BarChart3 },
+    { id: 'assignments', label: '과제', icon: BookOpen },
+    { id: 'submissions', label: '제출 완료', icon: FileText },
+    { id: 'grades', label: '성적', icon: BarChart3 },
   ];
 
   const professorTabs = [
-    { id: 'assignments', label: 'All Assignments', icon: BookOpen },
-    { id: 'create', label: 'Create Assignment', icon: Plus },
-    { id: 'submissions', label: 'Student Submissions', icon: Users },
-    { id: 'grading', label: 'Grading', icon: BarChart3 },
+    { id: 'assignments', label: '과제', icon: BookOpen },
+    { id: 'create', label: '과제 할당', icon: Plus },
+    { id: 'submissions', label: '학생 제출', icon: Users },
+    { id: 'grading', label: '과제 채점', icon: BarChart3 },
   ];
 
   const adminTabs = [
     ...professorTabs,
-    { id: 'userManagement', label: 'User Management', icon: Users },
+    { id: 'userManagement', label: '유저 관리', icon: Users },
   ]
 
-  const tabs = user?.role === 'ADMIN' ? adminTabs : (user?.role === 'TEACHER' ? professorTabs : studentTabs);
+  const tabs = user?.role === 'ADMIN' ? adminTabs : (user?.role === 'PROFESSOR' ? professorTabs : studentTabs);
 
   return (
     <aside className="w-64 bg-white shadow-sm border-r border-gray-200 h-full">
       <div className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          {user?.role === 'STUDENT' ? 'Student Dashboard' : 'Professor/Admin Dashboard'}
-        </h2>
+        <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-gray-200">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {user?.role === 'ADMIN' ? '관리자 모드' : (user?.role === 'STUDENT' ? '메뉴' : '어서오세요, 교수님!')}
+            </h2>
+          </div>
+        </div>
         
         <nav className="space-y-2">
           {tabs.map(tab => {

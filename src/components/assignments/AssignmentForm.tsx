@@ -114,10 +114,10 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
         <Card>
             <div className="mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
-                    {assignment ? 'Edit Assignment' : 'Create New Assignment'}
+                    {assignment ? '과제 수정' : '새 과제 할당'}
                 </h3>
                 <p className="text-gray-600 mt-1">
-                    Fill in the details below to {assignment ? 'update' : 'create'} your assignment.
+                    Fill in the details below to {assignment ? '업데이트' : '생성'} your assignment.
                 </p>
             </div>
 
@@ -132,7 +132,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
                     label="Assignment Title"
                     value={formData.title}
                     onChange={handleChange('title')}
-                    placeholder="Enter assignment title"
+                    placeholder="과제 제목을 입력하세요."
                     required
                 />
 
@@ -143,7 +143,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
                     <textarea
                         value={formData.description}
                         onChange={handleChange('description')}
-                        placeholder="Describe the assignment requirements and instructions"
+                        placeholder="과제 요구 사항 및 지침 설명"
                         rows={6}
                         className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm resize-vertical"
                         required
@@ -171,17 +171,17 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Attachment Files
+                        파일 첨부
                     </label>
 
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                         <div className="text-center">
                             <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                             <p className="text-sm text-gray-600 mb-2">
-                                Click to upload files or drag and drop
+                                파일을 업로드하거나 드래그 앤 드롭하려면 클릭하세요.
                             </p>
                             <p className="text-xs text-gray-500">
-                                PDF, Word, Images up to 10MB each
+                                PDF, 워드, 이미지 각각 최대 10MB
                             </p>
                             <input
                                 ref={fileInputRef}
@@ -198,14 +198,14 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
                                 onClick={() => fileInputRef.current?.click()}
                                 className="mt-2"
                             >
-                                Choose Files
+                                파일 선택
                             </Button>
                         </div>
                     </div>
 
                     {selectedFiles.length > 0 && (
                         <div className="mt-4 space-y-2">
-                            <p className="text-sm font-medium text-gray-700">Selected Files:</p>
+                            <p className="text-sm font-medium text-gray-700">선택된 파일:</p>
                             {selectedFiles.map((file, index) => (
                                 <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
                                     <div className="flex items-center space-x-2">
@@ -234,7 +234,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
                         onClick={onCancel}
                         disabled={isLoading}
                     >
-                        Cancel
+                        취소
                     </Button>
                     <Button
                         type="submit"
@@ -242,8 +242,8 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
                         disabled={!formData.title || !formData.description || !formData.due_date}
                     >
                         {isLoading
-                            ? (assignment ? 'Updating...' : 'Creating...')
-                            : (assignment ? 'Update Assignment' : 'Create Assignment')
+                            ? (assignment ? '업데이트중...' : '생성중...')
+                            : (assignment ? '과제 업데이트' : '과제 생성')
                         }
                     </Button>
                 </div>

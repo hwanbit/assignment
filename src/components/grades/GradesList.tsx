@@ -22,7 +22,7 @@ export const GradesList: React.FC = () => {
         setLoading(true);
         try {
             let response;
-            if (user.role === 'student') {
+            if (user.role === 'STUDENT') {
                 // 학생 본인의 성적만 가져옵니다.
                 response = await gradeApi.getMyGrades();
             } else {
@@ -80,12 +80,12 @@ export const GradesList: React.FC = () => {
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                     <BarChart3 className="w-5 h-5 mr-2" />
-                    {user?.role === 'professor' ? 'All Grades' : 'My Grades'}
+                    {user?.role === 'PROFESSOR' ? '모든 성적' : '내 성적'}
                 </h3>
 
-                {user?.role === 'student' && gradedSubmissions.length > 0 && (
+                {user?.role === 'STUDENT' && gradedSubmissions.length > 0 && (
                     <div className="text-right">
-                        <p className="text-sm text-gray-500">Overall Average</p>
+                        <p className="text-sm text-gray-500">전체 평균</p>
                         <p className="text-2xl font-bold text-gray-900">{calculateGPA().toFixed(1)}%</p>
                     </div>
                 )}
@@ -94,11 +94,11 @@ export const GradesList: React.FC = () => {
             {gradedSubmissions.length === 0 ? (
                 <Card className="text-center py-12">
                     <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h4 className="text-lg font-medium text-gray-900 mb-2">No grades available</h4>
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">채점 가능한 항목 없음</h4>
                     <p className="text-gray-500">
-                        {user?.role === 'professor'
-                            ? 'You haven\'t graded any submissions yet.'
-                            : 'Your assignments haven\'t been graded yet.'
+                        {user?.role === 'PROFESSOR'
+                            ? '과제를 아직 채점하지 않았습니다.'
+                            : '과제가 아직 평가되지 않았습니다.'
                         }
                     </p>
                 </Card>
@@ -122,7 +122,7 @@ export const GradesList: React.FC = () => {
                                     </div>
 
                                     <div className="flex items-center space-x-6 text-sm text-gray-500 mb-3">
-                                        {user?.role === 'professor' && submission.student && (
+                                        {user?.role === 'PROFESSOR' && submission.student && (
                                             <div className="flex items-center space-x-1">
                                                 <User className="w-4 h-4" />
                                                 <span>{submission.student.full_name}</span>
@@ -131,20 +131,20 @@ export const GradesList: React.FC = () => {
 
                                         <div className="flex items-center space-x-1">
                                             <Calendar className="w-4 h-4" />
-                                            <span>Submitted: {formatDate(submission.submitted_at)}</span>
+                                            <span>제출된: {formatDate(submission.submitted_at)}</span>
                                         </div>
 
                                         {submission.grade && (
                                             <div className="flex items-center space-x-1">
                                                 <Calendar className="w-4 h-4" />
-                                                <span>Graded: {formatDate(submission.grade.graded_at)}</span>
+                                                <span>채점된: {formatDate(submission.grade.graded_at)}</span>
                                             </div>
                                         )}
                                     </div>
 
                                     {submission.grade?.feedback && (
                                         <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                                            <p className="text-sm font-medium text-blue-900 mb-1">Feedback:</p>
+                                            <p className="text-sm font-medium text-blue-900 mb-1">피드백:</p>
                                             <p className="text-blue-800 text-sm">{submission.grade.feedback}</p>
                                         </div>
                                     )}

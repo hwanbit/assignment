@@ -46,7 +46,7 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
 
   useEffect(() => {
     fetchAssignmentData();
-    if (user && user.role === 'student') {
+    if (user && user.role === 'STUDENT') {
       fetchStudentSubmission();
     }
     fetchQALogs();
@@ -137,14 +137,14 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
   }
 
   const overdue = isOverdue(assignment.due_date);
-  const canSubmit = user && user.role === 'student' && !overdue;
+  const canSubmit = user && user.role === 'STUDENT' && !overdue;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Assignments
+          과제로 돌아가기
         </Button>
       </div>
 
@@ -153,7 +153,7 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900">{assignment.title}</h2>
             <Badge variant={overdue ? 'danger' : 'success'}>
-              {overdue ? 'Overdue' : 'Active'}
+              {overdue ? '제출 마감' : '제출 가능'}
             </Badge>
           </div>
 
@@ -176,13 +176,13 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
         </div>
 
         <div className="prose max-w-none">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">설명</h3>
           <p className="text-gray-700 whitespace-pre-wrap mb-6">{assignment.description}</p>
         </div>
 
         {assignmentFiles.length > 0 && (
           <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Attached Files</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">첨부된 파일</h3>
             <div className="space-y-2">
               {assignmentFiles.map(file => (
                 <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -199,7 +199,7 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
                     onClick={() => handleDownloadFile(file)}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download
+                    다운로드
                   </Button>
                 </div>
               ))}
@@ -207,10 +207,10 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
           </div>
         )}
 
-        {user && user.role === 'student' && (
+        {user && user.role === 'STUDENT' && (
           <div className="border-t pt-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Your Submission</h3>
+              <h3 className="text-lg font-semibold text-gray-900">제출물</h3>
               {canSubmit && (
                 <Button onClick={() => setShowSubmissionForm(true)}>
                   {submission ? 'Update Submission' : 'Submit Assignment'}
@@ -221,7 +221,7 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
             {submission ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-center space-x-2 mb-2">
-                  <Badge variant="success">Submitted</Badge>
+                  <Badge variant="success">제출됨</Badge>
                   <span className="text-sm text-gray-600">
                     on {formatDate(submission.submitted_at)}
                   </span>
@@ -240,13 +240,13 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
             ) : overdue ? (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-red-800 font-medium">
-                  This assignment is overdue. No submissions are accepted.
+                  과제 기한이 지났기에 제출이 불가합니다.
                 </p>
               </div>
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-yellow-800">
-                  You haven't submitted this assignment yet.
+                  아직 과제를 제출하지 않았습니다.
                 </p>
               </div>
             )}
@@ -254,11 +254,11 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
         )}
       </Card>
 
-      {user && user.role === 'student' && (
+      {user && user.role === 'STUDENT' && (
         <Card>
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <MessageSquare className="w-5 h-5 mr-2" />
-            Ask a Question (AI Assistant)
+            AI Assistant에게 물어보기
           </h3>
           
           <div className="space-y-4">
@@ -267,7 +267,7 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
                 type="text"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Ask a question about this assignment..."
+                placeholder="과제에 대해 질문하세요..."
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 onKeyDown={(e) => e.key === 'Enter' && handleAskQuestion()}
               />

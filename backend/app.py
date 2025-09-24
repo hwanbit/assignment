@@ -2,13 +2,12 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-
-# extensions.py에서 db와 bcrypt 인스턴스를 가져옵니다.
 from backend.extensions import db, bcrypt
 
 # .env 파일 로드
 load_dotenv(override=True)
 
+# assignment_project 위치에서 python -m backend.app로 실행
 def create_app():
     """
     Application Factory Function.

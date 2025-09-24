@@ -125,7 +125,7 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({
     };
 
     if (isFetching) {
-        return <Card className="p-6 text-center">Loading submission status...</Card>;
+        return <Card className="p-6 text-center">제출 상태 불러오는 중...</Card>;
     }
 
     // 채점이 완료된 경우 폼 비활성화
@@ -135,9 +135,9 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({
                 <div className="flex items-center space-x-3">
                     <CheckCircle className="w-8 h-8 text-green-500" />
                     <div>
-                        <h4 className="text-lg font-semibold text-gray-900">Submission Graded</h4>
+                        <h4 className="text-lg font-semibold text-gray-900">제출물 채점 완료</h4>
                         <p className="text-gray-600">
-                            Your submission has been graded. You cannot make further changes.
+                            제출물이 채점되었습니다. 더 이상 수정할 수 없습니다.
                         </p>
                     </div>
                 </div>
@@ -152,9 +152,9 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({
                 <div className="flex items-center space-x-3">
                     <AlertCircle className="w-8 h-8 text-red-500" />
                     <div>
-                        <h4 className="text-lg font-semibold text-gray-900">Assignment Overdue</h4>
+                        <h4 className="text-lg font-semibold text-gray-900">과제 마감 초과</h4>
                         <p className="text-gray-600">
-                            The deadline for this assignment has passed.
+                            이 과제의 제출 기한이 지났습니다.
                         </p>
                     </div>
                 </div>
@@ -179,13 +179,13 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({
 
                 {existingSubmission && !existingSubmission.grade && (
                     <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md text-sm">
-                        You have already submitted this assignment. Resubmitting will overwrite your previous submission.
+                        이미 이 과제를 제출했습니다. 다시 제출하면 이전 제출물이 덮어쓰여집니다.
                     </div>
                 )}
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Text Response (Optional)
+                        텍스트 응답 (선택 사항)
                     </label>
                     <textarea
                         value={content}
@@ -198,17 +198,17 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Attach Files
+                        파일 첨부
                     </label>
 
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                         <div className="text-center">
                             <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                             <p className="text-sm text-gray-600 mb-2">
-                                Click to upload files or drag and drop
+                                클릭하여 파일을 업로드하거나 끌어다 놓으세요
                             </p>
                             <p className="text-xs text-gray-500">
-                                Max 10MB per file.
+                                파일당 최대 10MB
                             </p>
                             <input
                                 ref={fileInputRef}
@@ -224,14 +224,14 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({
                                 onClick={() => fileInputRef.current?.click()}
                                 className="mt-2"
                             >
-                                Choose Files
+                                파일 선택
                             </Button>
                         </div>
                     </div>
 
                     {selectedFiles.length > 0 && (
                         <div className="mt-4 space-y-2">
-                            <p className="text-sm font-medium text-gray-700">New Files to Upload:</p>
+                            <p className="text-sm font-medium text-gray-700">새로 업로드할 파일:</p>
                             {selectedFiles.map((file, index) => (
                                 <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
                                     <div className="flex items-center space-x-2">

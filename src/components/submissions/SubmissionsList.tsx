@@ -32,7 +32,7 @@ export const SubmissionsList: React.FC<SubmissionsListProps> = ({
 
         try {
             let response;
-            if (user.role === 'student') {
+            if (user.role === 'STUDENT') {
                 // 학생은 자신의 제출물 목록을 가져옵니다.
                 response = await submissionApi.getMySubmissions();
             } else {
@@ -89,11 +89,11 @@ export const SubmissionsList: React.FC<SubmissionsListProps> = ({
         return (
             <Card className="text-center py-12">
                 <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h4 className="text-lg font-medium text-gray-900 mb-2">No submissions found</h4>
+                <h4 className="text-lg font-medium text-gray-900 mb-2">제출물을 찾을 수 없습니다.</h4>
                 <p className="text-gray-500">
-                    {user?.role === 'professor'
-                        ? 'Students haven\'t submitted any assignments yet.'
-                        : 'You haven\'t submitted any assignments yet.'
+                    {user?.role === 'PROFESSOR'
+                        ? '학생들이 아직 과제를 제출하지 않았습니다.'
+                        : '할당한 과제가 없습니다.'
                     }
                 </p>
             </Card>
@@ -104,7 +104,7 @@ export const SubmissionsList: React.FC<SubmissionsListProps> = ({
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-900">
-                    {user?.role === 'professor' ? 'Student Submissions' : 'My Submissions'}
+                    {user?.role === 'PROFESSOR' ? '학생 제출' : '내 제출'}
                 </h3>
                 <p className="text-sm text-gray-500">
                     {submissions.length} submission{submissions.length !== 1 ? 's' : ''}
@@ -120,13 +120,13 @@ export const SubmissionsList: React.FC<SubmissionsListProps> = ({
                                     <h4 className="text-lg font-semibold text-gray-900">
                                         {submission.assignment?.title}
                                     </h4>
-                                    <Badge variant={submission.grade ? 'success' : 'warning'}>
-                                        {submission.grade ? 'Graded' : 'Pending'}
+                                    <Badge variant={submission.grade ? '성공' : '실패'}>
+                                        {submission.grade ? '채점 완료' : '채점 대기'}
                                     </Badge>
                                 </div>
 
                                 <div className="flex items-center space-x-6 text-sm text-gray-500 mb-4">
-                                    {user?.role === 'professor' && submission.student && (
+                                    {user?.role === 'PROFESSOR' && submission.student && (
                                         <div className="flex items-center space-x-1">
                                             <User className="w-4 h-4" />
                                             <span>{submission.student.full_name}</span>
@@ -194,14 +194,14 @@ export const SubmissionsList: React.FC<SubmissionsListProps> = ({
                                 )}
                             </div>
 
-                            {user?.role === 'professor' && onGradeSubmission && (
+                            {user?.role === 'PROFESSOR' && onGradeSubmission && (
                                 <div className="ml-4">
                                     <Button
                                         variant={submission.grade ? 'outline' : 'primary'}
                                         size="sm"
                                         onClick={() => onGradeSubmission(submission)}
                                     >
-                                        {submission.grade ? 'Update Grade' : 'Grade'}
+                                        {submission.grade ? '수정하기' : '채점하기'}
                                     </Button>
                                 </div>
                             )}
