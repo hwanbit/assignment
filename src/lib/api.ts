@@ -82,12 +82,15 @@ export const qaLogApi = {
 
 // 파일 관련 API
 export const fileApi = {
-  // 파일 다운로드 URL을 받아오는 엔드포인트 추가
-  // 실제 파일 다운로드 로직은 백엔드에서 처리
-  download: async (type: string, filePath: string): Promise<string> => {
+  download: async (type: string, filePath: string): Promise<Blob> => {
     try {
-      const response = await api.post('/files/download', { type, filePath }, { responseType: 'blob' });
-      return URL.createObjectURL(response.data);
+      // POST -> GET으로 변경, 요청 본문(body) -> URL 파라미터(params)로 변경
+      const response = await api.get('/files/download', {
+        params: { type, filePath },
+        responseType: 'blob',
+      });
+      // URL.createObjectURL(response.data) 대신 받은 데이터 자체를 반환
+      return response.data;
     } catch (error) {
       console.error('File download failed:', error);
       throw error;

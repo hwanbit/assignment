@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { assignmentApi, submissionApi } from '../../lib/api.ts';
 import { useAuth } from '../../contexts/AuthContext';
 import { Assignment, Submission } from '../../types';
@@ -9,29 +10,26 @@ import { formatDate, isOverdue, getDaysUntilDue } from '../../utils/date';
 import { Calendar, FileText, User, Eye, Edit, Trash2 } from 'lucide-react';
 
 interface AssignmentListProps {
-    onSelectAssignment: (assignment: Assignment) => void;
     onEditAssignment?: (assignment: Assignment) => void;
     refreshTrigger?: number;
 }
 
 export const AssignmentList: React.FC<AssignmentListProps> = ({
-                                                                  onSelectAssignment,
                                                                   onEditAssignment,
                                                                   refreshTrigger,
                                                               }) => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [assignments, setAssignments] = useState<Assignment[]>([]);
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'모두' | '진행중' | '기한 경과' | '완료됨'>('모두');
 
     useEffect(() => {
-        // 기존 fetchAssignments 함수를 아래와 같이 수정합니다.
         const fetchData = async () => {
             if (!user) return;
             setLoading(true);
             try {
-                // 과제 목록과 학생 제출 목록을 함께 불러옵니다.
                 const assignmentPromise = assignmentApi.getAll();
                 const submissionPromise = user.role === 'STUDENT'
                     ? submissionApi.getMySubmissions()
@@ -60,12 +58,15 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
             return;
         }
         try {
-            // 새로운 axios 호출 로직
             await assignmentApi.delete(assignmentId);
             setAssignments(prev => prev.filter(a => a.id !== assignmentId));
         } catch (error) {
             console.error('Error deleting assignment:', error);
         }
+    };
+
+    const handleNavigateToDetails = (assignmentId: string) => {
+        navigate(`/assignments/${assignmentId}`);
     };
 
     const completedAssignmentIds = new Set(submissions.map(sub => sub.assignment_id));
@@ -152,7 +153,7 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
                         <Card
                             key={assignment.id}
                             className="cursor-pointer hover:shadow-md transition-shadow"
-                            onClick={() => onSelectAssignment(assignment)}
+                            onClick={() => handleNavigateToDetails(assignment.id)}
                         >
                             <div className="flex justify-between items-start">
                                 <div className="flex-1">
@@ -193,7 +194,7 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
                                             size="sm"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                onSelectAssignment(assignment);
+                                                handleNavigateToDetails(assignment.id);
                                             }}
                                         >
                                             <Eye className="w-4 h-4" />

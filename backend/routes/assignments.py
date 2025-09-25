@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify, g, current_app
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm import joinedload
 from backend.extensions import db
-from backend.models import User, Assignment, Attachment
+from backend.models import User, Assignment, Attachment, Submission, Grade, Enrollment, Course
 from backend.routes.auth import authenticate, authorize
 
 assignments_bp = Blueprint('assignments', __name__)
@@ -44,8 +44,26 @@ def attachment_to_dict(attachment):
 @assignments_bp.route('/', methods=['GET'])
 @authenticate
 def get_all_assignments():
+    """
+    모든 과제를 조회합니다.
+    - ADMIN: 모든 과제를 조회합니다.
+    - PROFESSOR: 자신이 생성한 과제만 조회합니다.
+    - STUDENT: 모든 과제를 조회합니다.
+    """
     try:
-        assignments = Assignment.query.options(joinedload(Assignment.teacher)).order_by(Assignment.dueDate).all()
+        user_role = g.user_role
+        user_id = g.user_id
+        query = Assignment.query.options(joinedload(Assignment.teacher))
+
+        if user_role == 'PROFESSOR':
+            # 교수는 자신이 가르치는 강의의 과제만 조회
+            query = query.join(Course).filter(Course.teacherId == user_id)
+        elif user_role == 'STUDENT':
+            # 학생은 자신이 수강하는 강의의 과제만 조회
+            enrolled_course_ids = [e.courseId for e in Enrollment.query.filter_by(studentId=user_id).all()]
+            query = query.filter(Assignment.courseId.in_(enrolled_course_ids))
+
+        assignments = query.order_by(Assignment.dueDate).all()
         return jsonify([assignment_to_dict(a) for a in assignments])
     except Exception as e:
         current_app.logger.error(f"Error fetching assignments: {e}")
@@ -64,12 +82,17 @@ def create_assignment():
 
         due_date_obj = datetime.fromisoformat(due_date_str)
 
+        course_id = data.get('courseId')
+        if not course_id:
+            return jsonify(error="Course ID is required"), 400
+
         new_assignment = Assignment(
             title=data['title'],
             description=data['description'],
             dueDate=due_date_obj,
             maxScore=int(data['max_points']),
             teacherId=g.user_id,
+            courseId=course_id,
         )
         db.session.add(new_assignment)
         db.session.commit()
@@ -104,10 +127,18 @@ def create_assignment():
 @assignments_bp.route('/<id>', methods=['GET'])
 @authenticate
 def get_assignment(id):
+    """
+    특정 과제를 조회합니다.
+    - PROFESSOR는 자신이 생성한 과제만 조회할 수 있습니다.
+    """
     try:
         assignment = Assignment.query.options(joinedload(Assignment.teacher)).filter_by(id=id).first()
         if not assignment:
             return jsonify(error="Assignment not found"), 404
+
+        if g.user_role == 'PROFESSOR' and assignment.teacherId != g.user_id:
+            return jsonify(error="Forbidden"), 403
+
         return jsonify(assignment_to_dict(assignment))
     except Exception as e:
         current_app.logger.error(f"Error fetching assignment: {e}")
@@ -115,8 +146,15 @@ def get_assignment(id):
 
 @assignments_bp.route('/<assignment_id>/files', methods=['GET'])
 @authenticate
-def get_assignment_files(id):
+def get_assignment_files(assignment_id):
     try:
+        assignment = Assignment.query.filter_by(id=assignment_id).first()
+        if not assignment:
+            return jsonify(error="Assignment not found"), 404
+
+        if g.user_role == 'PROFESSOR' and assignment.teacherId != g.user_id:
+            return jsonify(error="Forbidden"), 403
+
         files = Attachment.query.filter_by(assignmentId=assignment_id).all()
         return jsonify([attachment_to_dict(f) for f in files])
     except Exception as e:
@@ -126,16 +164,33 @@ def get_assignment_files(id):
 @assignments_bp.route('/<id>', methods=['PUT'])
 @authorize(allowed_roles=['PROFESSOR', 'ADMIN'])
 def update_assignment(id):
+    """
+    과제를 수정합니다.
+    - ADMIN은 모든 과제를 수정할 수 있습니다.
+    - PROFESSOR는 자신이 생성한 과제만 수정할 수 있습니다.
+    """
     data = request.json
     try:
-        assignment = Assignment.query.filter_by(id=id, teacherId=g.user_id).first()
+        assignment = Assignment.query.filter_by(id=id).first()
         if not assignment:
-            return jsonify(error="Assignment not found or you don't have permission"), 404
+            return jsonify(error="Assignment not found"), 404
+
+        if g.user_role == 'PROFESSOR' and assignment.teacherId != g.user_id:
+            return jsonify(error="You don't have permission to edit this assignment"), 403
+
+        graded_submission_exists = db.session.query(Grade.id).join(Submission).filter(Submission.assignmentId == id).first()
+        if graded_submission_exists:
+            return jsonify(error="Cannot edit an assignment that has already been graded."), 403
 
         assignment.title = data.get('title', assignment.title)
         assignment.description = data.get('description', assignment.description)
+
         if 'due_date' in data:
-            assignment.dueDate = datetime.fromisoformat(data['due_date'])
+            due_date_str = data['due_date']
+            if due_date_str.endswith('Z'):
+                due_date_str = due_date_str[:-1] + '+00:00'
+            assignment.dueDate = datetime.fromisoformat(due_date_str)
+
         assignment.maxScore = data.get('max_points', assignment.maxScore)
         assignment.updatedAt = datetime.utcnow()
 
@@ -149,14 +204,25 @@ def update_assignment(id):
 @assignments_bp.route('/<id>', methods=['DELETE'])
 @authorize(allowed_roles=['PROFESSOR', 'ADMIN'])
 def delete_assignment(id):
+    """
+    과제를 삭제합니다.
+    - ADMIN은 모든 과제를 삭제할 수 있습니다.
+    - PROFESSOR는 자신이 생성한 과제만 삭제할 수 있습니다.
+    """
     try:
-        assignment = Assignment.query.filter_by(id=id, teacherId=g.user_id).first()
+        assignment = Assignment.query.filter_by(id=id).first()
         if not assignment:
-            return jsonify(error="Assignment not found or you don't have permission"), 404
+            return jsonify(error="Assignment not found"), 404
 
-        # 첨부 파일 삭제 (로컬 및 DB)
+        if g.user_role == 'PROFESSOR' and assignment.teacherId != g.user_id:
+            return jsonify(error="You don't have permission to delete this assignment"), 403
+
+        graded_submission_exists = db.session.query(Grade.id).join(Submission).filter(Submission.assignmentId == id).first()
+        if graded_submission_exists:
+            return jsonify(error="Cannot delete an assignment that has already been graded."), 403
+
         for attachment in assignment.attachments:
-            file_path = os.path.join(UPLOAD_FOLDER, attachment.fileUrl)
+            file_path = os.path.join(current_app.root_path, UPLOAD_FOLDER, attachment.fileUrl)
             if os.path.exists(file_path):
                 os.remove(file_path)
             db.session.delete(attachment)
@@ -183,9 +249,11 @@ def upload_attachment(id):
     if not assignment:
         return jsonify(error='Assignment not found'), 404
 
+    if g.user_role == 'PROFESSOR' and assignment.teacherId != g.user_id:
+        return jsonify(error="You don't have permission to upload files to this assignment"), 403
+
     if file:
         try:
-            # 안전한 파일명 생성 및 저장 경로 구성
             filename = secure_filename(file.filename)
             unique_filename = f"{uuid.uuid4()}_{filename}"
             directory_path = os.path.join(current_app.root_path, UPLOAD_FOLDER, id)
@@ -193,7 +261,6 @@ def upload_attachment(id):
             file_path = os.path.join(directory_path, unique_filename)
             file.save(file_path)
 
-            # 데이터베이스에 파일 정보 저장
             new_attachment = Attachment(
                 assignmentId=id,
                 fileName=filename,
@@ -210,5 +277,4 @@ def upload_attachment(id):
             current_app.logger.error(f"Error uploading file: {e}")
             return jsonify(error="File upload failed"), 500
     else:
-        # 이 부분은 파일이 없는 경우에 대한 예외 처리로, 그대로 유지합니다.
         return jsonify(error="File not provided"), 400

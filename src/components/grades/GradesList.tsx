@@ -94,7 +94,7 @@ export const GradesList: React.FC = () => {
             {gradedSubmissions.length === 0 ? (
                 <Card className="text-center py-12">
                     <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h4 className="text-lg font-medium text-gray-900 mb-2">채점 가능한 항목 없음</h4>
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">성적 없음</h4>
                     <p className="text-gray-500">
                         {user?.role === 'PROFESSOR'
                             ? '과제를 아직 채점하지 않았습니다.'

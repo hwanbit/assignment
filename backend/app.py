@@ -3,6 +3,10 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 from backend.extensions import db, bcrypt
+from backend.routes.grades import grades_bp
+from backend.routes.files import files_bp
+from backend.routes.admin import admin_bp
+from backend.routes.qa_logs import qa_logs_bp
 
 # .env 파일 로드
 load_dotenv(override=True)
@@ -46,6 +50,7 @@ def create_app():
         app.register_blueprint(grades_bp, url_prefix='/api/grades')
         app.register_blueprint(files_bp, url_prefix='/api/files')
         app.register_blueprint(admin_bp, url_prefix='/api/admin')
+        app.register_blueprint(qa_logs_bp, url_prefix='/api/qa-logs')
 
     # Global error handlers
     @app.errorhandler(404)
