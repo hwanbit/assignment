@@ -13,4 +13,4 @@ class Config:
 
     # 파일 업로드 설정
     UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024 * 1024  # 5GB

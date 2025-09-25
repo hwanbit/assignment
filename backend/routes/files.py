@@ -32,7 +32,7 @@ def download_file():
                 return jsonify(error="File not found in database."), 404
 
             submission = submission_file.submission
-            is_teacher_or_admin = g.user_role in ['TEACHER', 'ADMIN']
+            is_teacher_or_admin = g.user_role in ['PROFESSOR', 'ADMIN']
             is_owner = submission.studentId == g.user_id
 
             if not (is_teacher_or_admin or is_owner):

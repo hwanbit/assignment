@@ -1,47 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '../types/index.ts';
-import axios from 'axios';
-
-// API 기본 설정
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-// axios 인스턴스 생성
-const api = axios.create({
-  baseURL: API_URL,
-});
-
-// 토큰 자동 추가 인터셉터
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// 응답 인터셉터 (401 에러 처리)
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        // 토큰 만료 시 처리
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-      }
-      return Promise.reject(error);
-    }
-);
-
-// 타입 정의
-interface User {
-  id: string;
-  email: string;
-  fullName: string;
-  role: 'PROFESSOR' | 'STUDENT' | 'ADMIN';
-  createdAt?: string;
-  updatedAt?: string;
-}
+import { authApi } from '../lib/api';
 
 interface AuthResponse {
   token: string;
@@ -51,9 +10,9 @@ interface AuthResponse {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, role: 'admin' | 'professor' | 'student') => Promise<void>;
+  signUp: (email: string, password: string, fullName: string, role: 'PROFESSOR' | 'STUDENT') => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: () => void;
   updateUser: (userData: Partial<User>) => void;
 }
 
@@ -72,34 +31,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 앱 시작 시 저장된 토큰과 사용자 정보 확인
     checkAuthStatus();
   }, []);
 
   const checkAuthStatus = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem('token');
       const savedUser = localStorage.getItem('user');
 
       if (token && savedUser) {
-        // 저장된 사용자 정보로 일단 설정
         setUser(JSON.parse(savedUser));
-
-        // 토큰 유효성 확인 (선택적)
-        try {
-          const response = await api.get('/auth/me');
-          setUser(response.data.user);
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-        } catch (error) {
-          // 토큰이 유효하지 않으면 로컬 스토리지 클리어
-          console.error('Token validation failed:', error);
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setUser(null);
-        }
+        // 토큰 유효성 검사를 위해 서버에 현재 사용자 정보 요청
+        const response = await authApi.getCurrentUser();
+        setUser(response.data.user);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      // lib/api.ts의 인터셉터가 401 에러를 처리하므로 여기서는 별도의 처리가 불필요합니다.
     } finally {
       setLoading(false);
     }
@@ -107,25 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string, role: 'PROFESSOR' | 'STUDENT') => {
     try {
-      const response = await api.post<AuthResponse>('/auth/register', {
+      await authApi.register({
         email,
         password,
         fullName,
         role,
       });
-
-      const { token, user } = response.data;
-
-      // 토큰과 사용자 정보 저장
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      // 상태 업데이트
-      setUser(user);
-
-      // axios 디폴트 헤더에 토큰 설정
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
+      // 회원가입 성공 시 추가적인 로직 (예: 알림 메시지)을 여기에 구현할 수 있습니다.
     } catch (error: any) {
       console.error('Sign up error:', error);
       if (error.response?.data?.message) {
@@ -140,22 +78,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      const response = await api.post<AuthResponse>('/auth/login', {
+      const response = await authApi.login({
         email,
         password,
       });
 
       const { token, user } = response.data;
 
-      // 토큰과 사용자 정보 저장
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-
-      // 상태 업데이트
       setUser(user);
-
-      // axios 디폴트 헤더에 토큰 설정
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     } catch (error: any) {
       console.error('Sign in error:', error);
@@ -171,28 +103,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signOut = async () => {
-    try {
-      // 선택적: 서버에 로그아웃 요청 (서버에서 토큰 무효화 등)
-      // await api.post('/auth/logout');
-
-      // 로컬 스토리지 클리어
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
-      // axios 헤더에서 토큰 제거
-      delete api.defaults.headers.common['Authorization'];
-
-      // 상태 초기화
-      setUser(null);
-
-    } catch (error) {
-      console.error('Sign out error:', error);
-      // 에러가 발생해도 로컬은 클리어
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setUser(null);
-    }
+  const signOut = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    // 로그아웃 시 로그인 페이지로 이동하여 상태를 완전히 초기화합니다.
+    window.location.href = '/login';
   };
 
   const updateUser = (userData: Partial<User>) => {
@@ -214,10 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
       <AuthContext.Provider value={value}>
-        {children}
+        {!loading && children}
       </AuthContext.Provider>
   );
 };
-
-// API 인스턴스 export (다른 컴포넌트에서 사용)
-export { api };

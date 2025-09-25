@@ -12,7 +12,7 @@ class UserStatus(enum.Enum):
 
 class Role(enum.Enum):
     STUDENT = "STUDENT"
-    TEACHER = "TEACHER"
+    PROFESSOR = "PROFESSOR"
     ADMIN = "ADMIN"
 
 class SubmissionStatus(enum.Enum):

@@ -17,6 +17,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401 && window.location.pathname !== '/login') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+);
+
 export const authApi = {
   login: (data: any) => api.post('/auth/login', data),
   register: (data: any) => api.post('/auth/register', data),
@@ -24,25 +36,33 @@ export const authApi = {
 };
 
 export const assignmentApi = {
-  getAll: () => api.get<Assignment[]>('/assignments'),
+  getAll: () => api.get<Assignment[]>('/assignments/'),
   getById: (id: string) => api.get<Assignment>(`/assignments/${id}`),
-  create: (data: FormData) => api.post<Assignment>('/assignments', data, {
+  create: (data: FormData) => api.post<Assignment>('/assignments/', data, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
   update: (id: string, data: Partial<Assignment>) => api.put<Assignment>(`/assignments/${id}`, data),
   delete: (id: string) => api.delete(`/assignments/${id}`),
-  getFiles: (assignmentId: string) => api.get<AssignmentFile[]>(`/assignments/${id}/files`),
+  getFiles: (assignmentId: string) => api.get<AssignmentFile[]>(`/assignments/${assignmentId}/files`),
 };
 
 // 제출 관련 API
 export const submissionApi = {
   // 학생의 모든 제출물 가져오기
   getMySubmissions: () => api.get<Submission[]>('/submissions/my-submissions'),
+  // 특정 과제에 대한 모든 제출물 가져오기 (교수용)
+  getSubmissionsForAssignment: (assignmentId: string) =>
+      api.get<Submission[]>(`/assignments/${assignmentId}/submissions`),
+  // 모든 제출물 가져오기 (관리자/교수용)
+  getAllSubmissions: () => api.get<Submission[]>('/submissions'),
   // 특정 과제에 대한 학생 제출물 가져오기
-  getStudentSubmissionForAssignment: (assignmentId: string) => api.get<Submission>(`/assignments/${assignmentId}/my-submission`), // 예시 엔드포인트
-  create: (assignmentId: string, data: FormData) => api.post<Submission>(`/assignments/${assignmentId}/submit-with-files`, data, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
+  getStudentSubmissionForAssignment: (assignmentId: string) =>
+      api.get<Submission>(`/assignments/${assignmentId}/my-submission`), // 예시 엔드포인트
+  create: (assignmentId: string, data: FormData) =>
+      api.post<Submission>(`/assignments/${assignmentId}/submit-with-files`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
+  getAllSubmissions: () => api.get<Submission[]>('/submissions/'),
 };
 
 export const gradeApi = {

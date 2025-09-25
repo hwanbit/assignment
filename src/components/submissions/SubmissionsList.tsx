@@ -33,20 +33,18 @@ export const SubmissionsList: React.FC<SubmissionsListProps> = ({
         try {
             let response;
             if (user.role === 'STUDENT') {
-                // 학생은 자신의 제출물 목록을 가져옵니다.
                 response = await submissionApi.getMySubmissions();
+            } else if (assignment) {
+                response = await submissionApi.getSubmissionsForAssignment(assignment.id);
             } else {
-                // 교수는 특정 과제의 제출물 목록 또는 모든 제출물 목록을 가져옵니다.
-                if (assignment) {
-                    response = await submissionApi.getSubmissionsForAssignment(assignment.id);
-                } else {
-                    response = await submissionApi.getAllSubmissions();
-                }
+                // 교수가 특정 과제를 선택하지 않은 경우 모든 제출물을 가져옵니다.
+                // 또는 이 경우를 처리하는 다른 로직을 추가할 수 있습니다.
+                response = await submissionApi.getAllSubmissions();
             }
             setSubmissions(response.data || []);
         } catch (error) {
             console.error('Error fetching submissions:', error);
-            setSubmissions([]); // 에러 발생 시 목록을 비웁니다.
+            setSubmissions([]);
         } finally {
             setLoading(false);
         }

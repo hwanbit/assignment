@@ -4,7 +4,6 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify, g, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm import joinedload
-# backend.app 대신 backend.extensions에서 db를 가져옵니다.
 from backend.extensions import db
 from backend.models import Assignment, Submission, SubmissionStatus, SubmissionFile, User
 from backend.routes.auth import authenticate, authorize
@@ -12,10 +11,6 @@ from backend.routes.auth import authenticate, authorize
 submissions_bp = Blueprint('submissions', __name__)
 
 UPLOAD_FOLDER = 'uploads/submissions'
-ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'gif', 'zip'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def submission_to_dict(submission):
     """Submission 객체를 JSON 응답을 위한 딕셔너리로 변환합니다."""
@@ -112,7 +107,6 @@ def submit_assignment(assignmentId):
 @submissions_bp.route('/assignments/<assignmentId>/submit-with-files', methods=['POST'])
 @authorize(allowed_roles=['STUDENT'])
 def submit_assignment_with_files(assignmentId):
-    # 파일 및 텍스트 제출
     content = request.form.get('content', None)
     files = request.files.getlist('files[]')
 
@@ -141,12 +135,11 @@ def submit_assignment_with_files(assignmentId):
             )
             db.session.add(submission)
 
-        db.session.commit() # 먼저 submission을 저장하여 id를 확보
+        db.session.commit()
 
-        # 파일 처리
         if files:
             for file in files:
-                if file and allowed_file(file.filename):
+                if file:
                     filename = secure_filename(file.filename)
                     unique_filename = f"{uuid.uuid4()}_{filename}"
                     directory_path = os.path.join(current_app.root_path, UPLOAD_FOLDER, submission.id)
@@ -186,7 +179,7 @@ def get_my_submissions():
         return jsonify(error="Internal server error"), 500
 
 @submissions_bp.route('/assignments/<assignmentId>/submissions', methods=['GET'])
-@authorize(allowed_roles=['TEACHER', 'ADMIN'])
+@authorize(allowed_roles=['PROFESSOR', 'ADMIN'])
 def get_assignment_submissions(assignmentId):
     try:
         submissions = Submission.query.filter_by(assignmentId=assignmentId).options(
@@ -211,7 +204,6 @@ def remove_file_from_submission(submissionId, fileId):
         if not file_to_delete:
             return jsonify(error="File not found"), 404
 
-        # 로컬 파일 시스템에서 파일 삭제
         full_path = os.path.join(current_app.root_path, UPLOAD_FOLDER, file_to_delete.fileUrl)
         if os.path.exists(full_path):
             os.remove(full_path)
@@ -225,6 +217,27 @@ def remove_file_from_submission(submissionId, fileId):
         current_app.logger.error(f"Error deleting file from submission: {e}")
         return jsonify(error="Internal server error"), 500
 
+@submissions_bp.route('/assignments/<assignmentId>/my-submission', methods=['GET'])
+@authorize(allowed_roles=['STUDENT'])
+def get_my_submission_for_assignment(assignmentId):
+    """특정 과제에 대한 현재 학생의 제출물을 가져옵니다."""
+    try:
+        submission = Submission.query.filter_by(
+            assignmentId=assignmentId,
+            studentId=g.user_id
+        ).options(
+            joinedload(Submission.files),
+            joinedload(Submission.grade)
+        ).first()
+
+        if not submission:
+            return jsonify(None), 200
+
+        return jsonify(submission_to_dict(submission))
+    except Exception as e:
+        current_app.logger.error(f"Error fetching submission for assignment {assignmentId}: {e}")
+        return jsonify(error="Internal server error"), 500
+
 @submissions_bp.route('/files/<fileId>/download', methods=['GET'])
 @authenticate
 def download_file(fileId):
@@ -233,9 +246,8 @@ def download_file(fileId):
         if not submission_file:
             return jsonify(error="File not found"), 404
 
-        # 제출물 소유자, 교수, 관리자만 다운로드 가능
         submission = submission_file.submission
-        is_teacher_or_admin = g.user_role in ['TEACHER', 'ADMIN']
+        is_teacher_or_admin = g.user_role in ['PROFESSOR', 'ADMIN']
         is_owner = submission.studentId == g.user_id
 
         if not (is_teacher_or_admin or is_owner):

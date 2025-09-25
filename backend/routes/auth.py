@@ -68,10 +68,10 @@ def register():
     email = data.get('email')
     password = data.get('password')
     full_name = data.get('fullName')
-    role = data.get('role')
+    role_str = data.get('role') # 'role' 대신 'role_str'로 변경하여 혼동 방지
 
     # 필드 입력 확인
-    if not all([email, password, full_name, role]):
+    if not all([email, password, full_name, role_str]):
         return jsonify(error='모든 필드를 입력해주세요.'), 400
 
     # 이름 유효성 검사 (한글, 영문 대소문자만 허용)
@@ -96,12 +96,17 @@ def register():
     if existing_user:
         return jsonify(error='이미 사용 중인 이메일입니다.'), 409
 
+    # [수정] 프론트엔드 역할(professor)을 백엔드 역할(TEACHER)로 변환
+    role_to_save = role_str.upper()
+    if role_to_save == 'PROFESSOR':
+        role_to_save = 'TEACHER'
+
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(
         email=email,
         password=hashed_password,
         name=full_name,
-        role=Role[role.upper()]
+        role=Role[role_to_save] # 변환된 값으로 저장
     )
 
     db.session.add(new_user)
@@ -161,7 +166,7 @@ def get_current_user():
     }), 200
 
 @auth_bp.route('/update-profile', methods=['PUT'])
-@authorize(allowed_roles=["STUDENT", "TEACHER", "ADMIN"])
+@authorize(allowed_roles=["STUDENT", "PROFESSOR", "ADMIN"])
 def update_profile():
     data = request.json
     full_name = data.get('fullName')

@@ -51,7 +51,7 @@ def submission_with_grade_to_dict(submission):
     }
 
 @grades_bp.route('/submissions/<submissionId>/grade', methods=['POST'])
-@authorize(allowed_roles=['TEACHER', 'ADMIN'])
+@authorize(allowed_roles=['PROFESSOR', 'ADMIN'])
 def grade_submission(submissionId):
     data = request.json
     score = data.get('score')
@@ -113,7 +113,7 @@ def get_my_grades():
         return jsonify(error="Internal server error"), 500
 
 @grades_bp.route('/assignments/<assignmentId>/grades', methods=['GET'])
-@authorize(allowed_roles=['TEACHER', 'ADMIN'])
+@authorize(allowed_roles=['PROFESSOR', 'ADMIN'])
 def get_assignment_grades(assignmentId):
     try:
         submissions = Submission.query.filter_by(assignmentId=assignmentId).options(
@@ -128,7 +128,7 @@ def get_assignment_grades(assignmentId):
         return jsonify(error="Internal server error"), 500
 
 @grades_bp.route('/<gradeId>', methods=['PUT'])
-@authorize(allowed_roles=['TEACHER', 'ADMIN'])
+@authorize(allowed_roles=['PROFESSOR', 'ADMIN'])
 def update_grade(gradeId):
     data = request.json
     score = data.get('score')
@@ -161,7 +161,7 @@ def update_grade(gradeId):
         return jsonify(error="Internal server error"), 500
 
 @grades_bp.route('/<gradeId>', methods=['DELETE'])
-@authorize(allowed_roles=['TEACHER', 'ADMIN'])
+@authorize(allowed_roles=['PROFESSOR', 'ADMIN'])
 def delete_grade(gradeId):
     grade = Grade.query.filter_by(id=gradeId).first()
     if not grade:

@@ -48,6 +48,8 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
     fetchAssignmentData();
     if (user && user.role === 'STUDENT') {
       fetchStudentSubmission();
+    } else {
+      setLoading(false);
     }
     fetchQALogs();
   }, [assignment.id, user]);
@@ -65,10 +67,10 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
     if (!user) return;
 
     try {
-      const { data } = await submissionApi.getStudentSubmission(assignment.id, user.id);
+      const { data } = await submissionApi.getStudentSubmissionForAssignment(assignment.id);
       setSubmission(data);
     } catch (error) {
-      // No submission found - this is expected for new assignments
+      console.log('No submission found for this assignment, which is normal.');
     } finally {
       setLoading(false);
     }

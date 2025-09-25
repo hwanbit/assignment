@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { assignmentApi } from '../../lib/api.ts';
+import { assignmentApi, submissionApi } from '../../lib/api.ts';
 import { useAuth } from '../../contexts/AuthContext';
 import { Assignment, Submission } from '../../types';
 import { Card } from '../ui/Card';
@@ -26,22 +26,33 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
     const [filter, setFilter] = useState<'모두' | '진행중' | '기한 경과' | '완료됨'>('모두');
 
     useEffect(() => {
-        fetchAssignments();
+        // 기존 fetchAssignments 함수를 아래와 같이 수정합니다.
+        const fetchData = async () => {
+            if (!user) return;
+            setLoading(true);
+            try {
+                // 과제 목록과 학생 제출 목록을 함께 불러옵니다.
+                const assignmentPromise = assignmentApi.getAll();
+                const submissionPromise = user.role === 'STUDENT'
+                    ? submissionApi.getMySubmissions()
+                    : Promise.resolve({ data: [] });
+
+                const [assignmentResponse, submissionResponse] = await Promise.all([
+                    assignmentPromise,
+                    submissionPromise,
+                ]);
+
+                setAssignments(assignmentResponse.data || []);
+                setSubmissions(submissionResponse.data || []);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [user, refreshTrigger]);
-
-    const fetchAssignments = async () => {
-        if (!user) return;
-        setLoading(true);
-        try {
-            const response = await assignmentApi.getAll();
-            setAssignments(response.data || []);
-
-        } catch (error) {
-            console.error('Error fetching assignments:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleDeleteAssignment = async (assignmentId: string, e: React.MouseEvent) => {
         e.stopPropagation();

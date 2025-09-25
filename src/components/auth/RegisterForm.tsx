@@ -47,7 +47,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
 
     try {
       await signUp(formData.email, formData.password, formData.fullName, formData.role);
-      alert('Registration successful! Please wait for an administrator to approve your account.'); // 메시지 변경
+      alert('회원 가입을 성공적으로 요청했습니다! 관리자가 계정을 승인할 때까지 기다려 주세요.'); // 메시지 변경
       onSwitchToLogin();
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration');

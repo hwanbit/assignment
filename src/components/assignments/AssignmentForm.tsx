@@ -117,7 +117,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
                     {assignment ? '과제 수정' : '새 과제 할당'}
                 </h3>
                 <p className="text-gray-600 mt-1">
-                    Fill in the details below to {assignment ? '업데이트' : '생성'} your assignment.
+                    아래에 세부 사항을 입력하여 과제를 {assignment ? '업데이트' : '생성'} 하세요.
                 </p>
             </div>
 
@@ -129,7 +129,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
                 )}
 
                 <Input
-                    label="Assignment Title"
+                    label="제목"
                     value={formData.title}
                     onChange={handleChange('title')}
                     placeholder="과제 제목을 입력하세요."
@@ -138,7 +138,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Description
+                        설명
                     </label>
                     <textarea
                         value={formData.description}
@@ -152,7 +152,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
 
                 <div className="grid grid-cols-2 gap-4">
                     <Input
-                        label="Due Date"
+                        label="마감 기한"
                         type="datetime-local"
                         value={formData.due_date}
                         onChange={handleChange('due_date')}
@@ -160,7 +160,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
                     />
 
                     <Input
-                        label="Maximum Points"
+                        label="최고 성적"
                         type="number"
                         value={formData.max_points}
                         onChange={handleChange('max_points')}
@@ -181,7 +181,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
                                 파일을 업로드하거나 드래그 앤 드롭하려면 클릭하세요.
                             </p>
                             <p className="text-xs text-gray-500">
-                                PDF, 워드, 이미지 각각 최대 10MB
+                                최대 5GB까지 업로드 가능
                             </p>
                             <input
                                 ref={fileInputRef}

@@ -17,7 +17,7 @@ import { UserApproval } from './components/admin/UserApproval';
 // ... (Dashboard component remains the same)
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('assignment');
+  const [activeTab, setActiveTab] = useState('assignments');
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [gradingSubmission, setGradingSubmission] = useState<Submission | null>(null);
@@ -63,7 +63,7 @@ const Dashboard: React.FC = () => {
     }
 
     switch (activeTab) {
-      case 'assignment':
+      case 'assignments':
         return (
             <AssignmentList
                 onSelectAssignment={setSelectedAssignment}
@@ -83,18 +83,18 @@ const Dashboard: React.FC = () => {
             />
         );
 
-      case 'submission':
-        return user?.role === 'PROFESSOR' ? (
-            <SubmissionsList
-                onGradeSubmission={setGradingSubmission}
-            />
-        ) : (
-            <SubmissionsList />
-        );
+        case 'submissions':
+            return <SubmissionsList onGradeSubmission={setGradingSubmission} />;
 
-      case 'grading':
-      case 'grade':
-        return <GradesList />;
+        case 'grading':
+            return user?.role === 'PROFESSOR' ? (
+                <SubmissionsList onGradeSubmission={setGradingSubmission} />
+            ) : (
+                <GradesList />
+            );
+
+        case 'grades':
+            return <GradesList />;
 
       case 'userManagement':
         return user?.role === 'ADMIN' ? <UserApproval /> : null;
@@ -104,7 +104,9 @@ const Dashboard: React.FC = () => {
             <Card className="text-center py-12">
               <h3 className="text-lg font-medium text-gray-900">환영합니다!</h3>
               <p className="text-gray-500 mt-2">
-                  과제를 제출하러 오셨군요!<br>시작하려면 사이드바에서 메뉴를 선택하세요.</br>
+                  과제를 제출하러 오셨군요!
+                  <br />
+                  시작하려면 사이드바에서 메뉴를 선택하세요.
               </p>
             </Card>
         );
