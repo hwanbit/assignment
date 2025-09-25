@@ -186,8 +186,7 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({
                                         </div>
                                     </div>
                                 </div>
-
-                                {user?.role === 'PROFESSOR' && user.id === assignment.professor_id && (
+                                {(user?.role === 'PROFESSOR' || user?.role === 'ADMIN') && (
                                     <div className="flex space-x-2 ml-4">
                                         <Button
                                             variant="outline"

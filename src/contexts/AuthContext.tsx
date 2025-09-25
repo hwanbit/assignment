@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { User } from '../types/index.ts';
 import { authApi } from '../lib/api';
 
@@ -30,30 +30,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    checkAuthStatus();
+  const signOut = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    window.location.href = '/login';
   }, []);
 
-  const checkAuthStatus = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
 
-      if (token && savedUser) {
-        setUser(JSON.parse(savedUser));
-        // 토큰 유효성 검사를 위해 서버에 현재 사용자 정보 요청
-        const response = await authApi.getCurrentUser();
-        setUser(response.data.user);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        if (token && savedUser) {
+          setUser(JSON.parse(savedUser));
+          // 토큰 유효성 검사를 위해 서버에 현재 사용자 정보 요청
+          const response = await authApi.getCurrentUser();
+          setUser(response.data.user);
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      // lib/api.ts의 인터셉터가 401 에러를 처리하므로 여기서는 별도의 처리가 불필요합니다.
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    checkAuthStatus();
+  }, []);
 
   const signUp = async (email: string, password: string, fullName: string, role: 'PROFESSOR' | 'STUDENT') => {
     try {
@@ -63,7 +69,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fullName,
         role,
       });
-      // 회원가입 성공 시 추가적인 로직 (예: 알림 메시지)을 여기에 구현할 수 있습니다.
     } catch (error: any) {
       console.error('Sign up error:', error);
       if (error.response?.data?.message) {
@@ -101,14 +106,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('로그인에 실패했습니다. 다시 시도해주세요.');
       }
     }
-  };
-
-  const signOut = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    // 로그아웃 시 로그인 페이지로 이동하여 상태를 완전히 초기화합니다.
-    window.location.href = '/login';
   };
 
   const updateUser = (userData: Partial<User>) => {
