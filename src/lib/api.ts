@@ -103,3 +103,15 @@ export const adminApi = {
   approveUser: (userId: string) => api.post(`/admin/users/${userId}/approve`),
   rejectUser: (userId: string) => api.post(`/admin/users/${userId}/reject`),
 };
+
+// Course API
+export const getCourses = () => api.get('/api/courses');
+export const getCourseDetails = (id: string) => api.get(`/api/courses/${id}`);
+export const createCourse = (data: { name: string }) => api.post('/courses', data);
+export const updateCourse = (id: string, data: { name: string }) => api.put(`/courses/${id}`, data);
+export const deleteCourse = (id: string) => api.delete(`/api/courses/${id}`);
+export const enrollStudent = (courseId: string, studentId: string) => api.post(`/api/courses/${courseId}/enroll`, { studentId });
+export const unenrollStudent = (courseId: string, studentId: string) => api.delete(`/api/courses/${courseId}/unenroll`, { data: { studentId } });
+export const getAllStudents = () => api.get('/api/users/students');
+
+export default api;

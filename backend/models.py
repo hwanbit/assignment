@@ -41,6 +41,8 @@ class User(db.Model):
     updatedAt = db.Column(db.DateTime(3), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
+    courses_taught = db.relationship("Course", foreign_keys="[Course.teacherId]", back_populates="teacher")
+    enrollments = db.relationship("Enrollment", foreign_keys="[Enrollment.studentId]", back_populates="student")
     assignments = db.relationship("Assignment", foreign_keys="[Assignment.teacherId]", back_populates="teacher")
     submissions = db.relationship("Submission", foreign_keys="[Submission.studentId]", back_populates="student")
     grades = db.relationship("Grade", foreign_keys="[Grade.gradedBy]", back_populates="grader")
@@ -51,26 +53,26 @@ class User(db.Model):
 
 # Course 모델 추가
 class Course(db.Model):
-    __tablename__ = 'Course'
+    __tablename__ = 'course'
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = db.Column(db.String(255), nullable=False)
-    teacherId = db.Column(db.String(36), db.ForeignKey('User.id'), nullable=False)
+    teacherId = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
     createdAt = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    teacher = db.relationship('User', backref='courses_taught', foreign_keys=[teacherId])
-
-    assignments = db.relationship('Assignment', backref='course', lazy=True, cascade="all, delete-orphan")
-    enrollments = db.relationship('Enrollment', backref='course', lazy=True, cascade="all, delete-orphan")
+    teacher = db.relationship('User', back_populates='courses_taught', foreign_keys=[teacherId])
+    assignments = db.relationship('Assignment', back_populates='course', lazy=True, cascade="all, delete-orphan")
+    enrollments = db.relationship('Enrollment', back_populates='course', lazy=True, cascade="all, delete-orphan")
 
 # Enrollment 모델 추가 (학생-강의 연결)
 class Enrollment(db.Model):
-    __tablename__ = 'Enrollment'
+    __tablename__ = 'enrollment'
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    studentId = db.Column(db.String(36), db.ForeignKey('User.id'), nullable=False)
-    courseId = db.Column(db.String(36), db.ForeignKey('Course.id'), nullable=False)
+    studentId = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
+    courseId = db.Column(db.String(36), db.ForeignKey('course.id'), nullable=False)
     enrolledAt = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    student = db.relationship('User', backref='enrollments', foreign_keys=[studentId])
+    student = db.relationship('User', back_populates='enrollments', foreign_keys=[studentId])
+    course = db.relationship('Course', back_populates='enrollments', foreign_keys=[courseId])
 
 # =========================
 # Assignment
@@ -84,14 +86,15 @@ class Assignment(db.Model):
     dueDate = db.Column(db.DateTime(3), nullable=False)
     maxScore = db.Column(db.Integer, nullable=False)
     teacherId = db.Column(db.String(191), db.ForeignKey('user.id'), nullable=False)
-    courseId = db.Column(db.String(36), db.ForeignKey('Course.id'), nullable=False)
+    courseId = db.Column(db.String(36), db.ForeignKey('course.id'), nullable=False)
     createdAt = db.Column(db.DateTime(3), default=datetime.utcnow, nullable=False)
     updatedAt = db.Column(db.DateTime(3), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
-    teacher = db.relationship('User', backref='assignments', foreign_keys=[teacherId])
+    teacher = db.relationship('User', back_populates='assignments', foreign_keys=[teacherId])
+    course = db.relationship('Course', back_populates='assignments', foreign_keys=[courseId])
     submissions = db.relationship("Submission", back_populates="assignment", cascade="all, delete-orphan")
-    attachments = db.relationship('Attachment', backref='assignment', lazy=True, cascade="all, delete-orphan")
+    attachments = db.relationship('Attachment', back_populates='assignment', lazy=True, cascade="all, delete-orphan")
     qa_logs = db.relationship("QALog", back_populates="assignment", cascade="all, delete-orphan")
 
 
@@ -111,11 +114,10 @@ class Submission(db.Model):
     __table_args__ = (db.UniqueConstraint('assignmentId', 'studentId', name='uq_submission'),)
 
     # Relationships
-    student = db.relationship("User", back_populates="submissions")
-    assignment = db.relationship("Assignment", back_populates="submissions")
+    student = db.relationship("User", back_populates="submissions", foreign_keys=[studentId])
+    assignment = db.relationship("Assignment", back_populates="submissions", foreign_keys=[assignmentId])
     files = db.relationship("SubmissionFile", back_populates="submission", cascade="all, delete-orphan")
     grade = db.relationship("Grade", back_populates="submission", uselist=False, cascade="all, delete-orphan")
-    attachments = db.relationship('SubmissionAttachment', backref='submission', lazy=True, cascade="all, delete-orphan")
 
 # =========================
 # Grade
@@ -131,8 +133,8 @@ class Grade(db.Model):
     gradedAt = db.Column(db.DateTime(3), default=datetime.utcnow, nullable=False)
 
     # Relationships
-    grader = db.relationship("User", back_populates="grades")
-    submission = db.relationship("Submission", back_populates="grade")
+    grader = db.relationship("User", back_populates="grades", foreign_keys=[gradedBy])
+    submission = db.relationship("Submission", back_populates="grade", foreign_keys=[submissionId])
 
 
 # =========================
@@ -171,13 +173,13 @@ class SubmissionFile(db.Model):
     submission = db.relationship("Submission", back_populates="files")
 
     def __repr__(self):
-            return f'<SubmissionAttachment {self.fileName}>'
+            return f'<SubmissionFile {self.fileName}>'
 
 # =========================
 # QALog
 # =========================
 class QALog(db.Model):
-    __tablename__ = 'QALog'
+    __tablename__ = 'qalog'
 
     id = db.Column(db.String(191), primary_key=True, default=lambda: str(uuid.uuid4()))
     assignmentId = db.Column(db.String(191), db.ForeignKey('assignment.id'), nullable=False)
@@ -188,5 +190,5 @@ class QALog(db.Model):
     createdAt = db.Column(db.DateTime(3), default=datetime.utcnow, nullable=False)
 
     # Relationships
-    student = db.relationship("User", back_populates="qa_logs")
-    assignment = db.relationship("Assignment", back_populates="qa_logs")
+    student = db.relationship("User", back_populates="qa_logs", foreign_keys=[studentId])
+    assignment = db.relationship("Assignment", back_populates="qa_logs", foreign_keys=[assignmentId])

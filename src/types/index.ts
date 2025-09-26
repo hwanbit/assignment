@@ -74,3 +74,17 @@ export interface QALog {
   assignment?: Assignment;
   student?: User;
 }
+
+export interface Course {
+  id: string;
+  name: string;
+  teacherId: string;
+  students?: User[]; // 학생 목록은 상세 조회 시에만 포함
+}
+
+export interface Enrollment {
+  id: string;
+  studentId: string;
+  courseId: string;
+  enrolledAt: string;
+}

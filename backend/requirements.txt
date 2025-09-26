@@ -5,3 +5,4 @@ PyJWT==2.8.0
 python-dotenv==1.0.1
 mysql-connector-python==8.0.33
 Flask-CORS==4.0.1
+Flask-JWT-Extended
